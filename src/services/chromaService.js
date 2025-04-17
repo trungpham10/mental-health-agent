@@ -20,7 +20,7 @@ export const initializeChroma = async () => {
     // Create memory vector store if it doesn't exist
     if (!memoryStore) {
       memoryStore = await MemoryVectorStore.fromTexts(
-        ["Hello, I am Jarvis. How can I assist you today?"],
+        ["Hello, I am Serein. How can I assist you today?"],
         [{ type: 'conversation', isUser: false, timestamp: new Date().toISOString() }],
         embeddings
       );
@@ -53,7 +53,7 @@ export const clearAllStores = async () => {
     
     // Reset the stores to their initial state
     memoryStore = await MemoryVectorStore.fromTexts(
-      ["Hello, I am Jarvis. How can I assist you today?"],
+      ["Hello, I am Serein. How can I assist you today?"],
       [{ type: 'conversation', isUser: false, timestamp: new Date().toISOString() }],
       embeddings
     );

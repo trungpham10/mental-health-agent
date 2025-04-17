@@ -12,27 +12,128 @@ import {
 } from "../services/chromaService";
 import KnowledgeUploader from "../components/KnowledgeUploader";
 
-const emotions = [
-  { emoji: "😊", label: "happy" },
-  { emoji: "😔", label: "sad" },
-  { emoji: "😠", label: "angry" },
-  { emoji: "😰", label: "anxious" },
-  { emoji: "🥱", label: "tired" },
-  { emoji: "😍", label: "loved" },
-];
-
 export default function Home() {
   const [messages, setMessages] = useState([
-    { id: 1, text: "Hello, I am Jarvis. How can I assist you today?", isUser: false },
+    { id: 1, text: "Hello, I am Serein. How can I assist you today?", isUser: false },
   ]);
   const [inputValue, setInputValue] = useState("");
   const [isDbInitialized, setIsDbInitialized] = useState(false);
-  const [queryMode, setQueryMode] = useState("both"); // "both", "knowledge", "memory"
+  const [queryMode, setQueryMode] = useState("both");
   const [isClearing, setIsClearing] = useState(false);
   const [isRecommending, setIsRecommending] = useState(false);
+  const [selectedMood, setSelectedMood] = useState(null);
+  const [detectedMood, setDetectedMood] = useState(null);
+
+  const moodDescriptions = {
+    '😊': 'Happy',
+    '😐': 'Neutral',
+    '😞': 'Sad',
+    '😡': 'Angry',
+    '😴': 'Tired',
+    '😰': 'Anxious',
+    '😍': 'Loved'
+  };
+
+  const [journalPrompt, setJournalPrompt] = useState(null);
+  const [journalResponse, setJournalResponse] = useState("");
+  const [journalHistory, setJournalHistory] = useState([]);
+
+  const [moodHistory, setMoodHistory] = useState([]);
+
   const [quote, setQuote] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [selectedEmotion, setSelectedEmotion] = useState("");
+  //const [loading, setLoading] = useState(false);
+  const [loadingQuote, setLoadingQuote] = useState(false);
+
+
+
+  const handleMoodSelect = (emoji) => {
+    setSelectedMood(emoji);
+    setMoodHistory((prev) => [
+      ...prev,
+      {
+        mood: emoji,
+        timestamp: new Date().toISOString(),
+      }
+    ]);
+  };
+
+  const detectMoodFromMessage = async (text) => {
+    try {
+      const res = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${process.env.NEXT_PUBLIC_OPENAI_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: "gpt-3.5-turbo",
+          messages: [
+            {
+              role: "system",
+              content: `You're a mood detection assistant. Given the user's message, classify the emotion into ONE of the following: 😊 Happy, 😐 Neutral, 😞 Sad, 😡 Angry, 😴 Tired. Respond ONLY with the emoji and no explanation.`,
+            },
+            {
+              role: "user",
+              content: `User's message: "${text}"`,
+            },
+          ],
+          max_tokens: 10,
+        }),
+      });
+
+      const data = await res.json();
+      const moodEmoji = data.choices?.[0]?.message?.content?.trim();
+      return moodEmoji;
+    } catch (err) {
+      console.error("Mood detection failed:", err);
+      return null;
+    }
+  };
+
+  const getFinalMood = async (userText) => {
+    const userMood = selectedMood;
+    const autoMood = await detectMoodFromMessage(userText);
+
+    const finalMood = userMood || autoMood || '😐';
+    setDetectedMood(autoMood);
+
+    if (userMood && autoMood && userMood !== autoMood) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now(),
+          isUser: false,
+          isSystem: true,
+          timestamp: new Date().toISOString(),
+          text: `You selected ${moodDescriptions[userMood]}, but I sensed you might be feeling more like ${moodDescriptions[autoMood]}. Would you like to explore that?`,
+        },
+      ]);
+
+    }
+    console.log({ userMood, autoMood })
+    return { userMood, autoMood, finalMood };
+  };
+
+  const fetchQuoteForMood = async (moodLabel) => {
+    try {
+      setLoadingQuote(true);
+      setQuote("");
+  
+      const res = await fetch("https://quotes-by-emotions.onrender.com/quote", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ emotion: moodLabel }),
+      });
+  
+      const data = await res.json();
+      setQuote(data.quote);
+    } catch (error) {
+      console.error("Quote fetch error:", error);
+      setQuote("Couldn't fetch a quote right now.");
+    } finally {
+      setLoadingQuote(false);
+    }
+  };
 
   // Initialize ChromaDB on component mount
   useEffect(() => {
@@ -69,7 +170,7 @@ export default function Home() {
       setMessages([
         { 
           id: Date.now(), 
-          text: "Hello, I am Jarvis. How can I assist you today?", 
+          text: "Hello, I am Seriene. How can I assist you today?", 
           isUser: false,
           timestamp: new Date().toISOString()
         }
@@ -163,6 +264,8 @@ export default function Home() {
     };
     
     const newMessages = [...messages, userMessage];
+    const moodToUse = await getFinalMood(userMessage.text);
+    const moodText = moodDescriptions[moodToUse] || 'Neutral';
     setMessages(newMessages);
     setInputValue("");
     
@@ -189,8 +292,9 @@ export default function Home() {
       
       const contextText = relevantContext.map(item => item.content).join("\n\n");
       console.log('Retrieved context from', contextSource, ':', contextText);
+    
 
-      // Call OpenAI API with context-enhanced prompt
+      // Call OpenAI API with context-enhanced prompt & including mood
       fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -202,12 +306,21 @@ export default function Home() {
           messages: [
             { 
               role: 'system', 
-              content: `You are Jarvis, a helpful AI assistant who helps user. 
-                        
-                      Here's some relevant context that might help with the response:
-                      ${contextText}
-                                            
-                      Use the context if relevant to the current question, but don't explicitly mention that you are using stored knowledge unless asked about it.` 
+              content: `You are Serein, a helpful AI mental health care assistant who helps user. 
+              
+              The user has selected their mood as: "${moodDescriptions[selectedMood] || 'Neutral'}".
+              Based on their message, you detected the mood as: "${moodDescriptions[detectedMood] || 'Neutral'}".
+
+              Please take both of these into consideration. If they align, proceed empathetically.
+              If they differ, consider offering gentle suggestions or questions to help the user reflect.
+
+              Adjust your tone and response based on this mood insight.
+
+              Here's some relevant context that might help with the response: ${contextText}
+
+              At the begin mention both selected and detected mood.
+
+              Use the context if relevant to the current question, but don’t explicitly mention stored memory or documents unless asked.`  
             },
             ...messages
               .filter(msg => !msg.isSystem) // Filter out system messages
@@ -273,22 +386,6 @@ export default function Home() {
     }
   };
 
-  const handleClick = async (emotion) => {
-    setSelectedEmotion(emotion);
-    setLoading(true);
-    setQuote("");
-
-    const res = await fetch("https://quotes-by-emotions.onrender.com/quote", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ emotion }),
-    });
-
-    const data = await res.json();
-    setQuote(data.quote);
-    setLoading(false);
-  };
-
   const handleNextBestAction = async () => {
     setIsRecommending(true);
     
@@ -338,7 +435,9 @@ export default function Home() {
           messages: [
             { 
               role: 'system', 
-              content: `You are Jarvis, a productivity-focused AI assistant who helps users prioritize their tasks and stay on schedule.
+              content: `You are Serein, You are Seriene, a calm, emotionally-aware mental health companion,
+              User’s current mood is: "${moodText}".
+
               
                       TASK: The user is asking for the next best action to take. You must recommend ONE specific action. Add a famous quote to motivate the user to accomplish the action.
                       
@@ -423,9 +522,9 @@ export default function Home() {
       <header className="flex items-center justify-between p-4 border-b border-gray-800">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center">
-            <span className="text-xs font-bold">J</span>
+            <span className="text-xs font-bold">S</span>
           </div>
-          <h1 className="text-xl font-bold">JARVIS</h1>
+          <h1 className="text-xl font-bold">SERIEN</h1>
           {isDbInitialized && (
             <div className="flex items-center gap-2">
               <span className="text-xs bg-green-500 text-white px-2 py-0.5 rounded-full ml-2">
@@ -440,7 +539,47 @@ export default function Home() {
               </span>
             </div>
           )}
+          
         </div>
+
+        {/* Mood Selection */}
+        <div className="flex items-center justify-center gap-4 p-4 border-b border-gray-800 bg-gray-900">
+          <span className="text-sm text-gray-300">Today’s Mood:</span>
+          {Object.keys(moodDescriptions).map((emoji) => (
+            <button
+              key={emoji}
+              className={`text-2xl transition hover:scale-125 ${
+              selectedMood === emoji ? 'ring-2 ring-purple-500 rounded-full' : ''
+            }`}
+            onClick={() => {
+              setSelectedMood(emoji);
+              const label = moodDescriptions[emoji]?.toLowerCase();
+              if (label) fetchQuoteForMood(label);
+
+              // Save mood to history
+              setMoodHistory((prev) => [
+                ...prev,
+                { 
+                  mood: emoji,
+                  description: moodDescriptions[emoji],
+                  timestamp: new Date().toISOString(),
+                },
+              ]);
+
+              // Show journaling prompt for specific moods
+              if (['😞', '😡', '😴'].includes(emoji)) {
+                setJournalPrompt(`Would you like to journal about what made you feel ${moodDescriptions[emoji].toLowerCase()} today?`);
+              } else {
+                setJournalPrompt(null);
+              }
+            }}
+            title={moodDescriptions[emoji]}
+            >
+            {emoji}
+            </button>
+          ))}
+        </div>
+
         <div className="flex items-center gap-4">
           <button
             onClick={handleNextBestAction}
@@ -604,38 +743,55 @@ export default function Home() {
       {/* Knowledge Uploader Component */}
       <KnowledgeUploader />
 
+      {journalPrompt && (
+        <div className="p-4 bg-gray-900 border-t border-gray-700">
+          <p className="text-sm text-gray-300 mb-2">{journalPrompt}</p>
+          <textarea
+            value={journalResponse}
+            onChange={(e) => setJournalResponse(e.target.value)}
+            rows={3}
+            placeholder="Write your thoughts here..."
+            className="w-full bg-gray-800 text-white p-2 rounded-md outline-none resize-none"
+          />
+          <button
+            onClick={() => {
+              if (journalResponse.trim()) {
+                const newEntry = {
+                  mood: selectedMood,
+                  description: moodDescriptions[selectedMood],
+                  text: journalResponse.trim(),
+                  timestamp: new Date().toISOString(),
+                };
+                setJournalHistory((prev) => [...prev, newEntry]);
+                setJournalPrompt(null);
+                setJournalResponse("");
+              }
+            }}
+            className="mt-2 px-3 py-1 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded"
+          >
+          Save Journal Entry
+          </button>
+        </div>
+      )}
+
+      {loadingQuote && (
+        <p className="text-sm italic text-gray-400 px-4 mt-2">Thinking of something uplifting...</p>
+      )}
+
+      {quote && (
+        <div className="px-4 mt-4">
+          <div className="p-3 rounded-md bg-gray-800 border border-gray-600">
+            <p className="text-sm text-gray-300">Here's something to reflect on:</p>
+            <p className="mt-2 italic text-white">“{quote}”</p>
+          </div>
+        </div>
+      )}
+
       {/* Visual effects */}
       <div className="fixed top-0 left-0 w-full h-full pointer-events-none opacity-30 z-[-1]">
         <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500 rounded-full filter blur-3xl"></div>
         <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-500 rounded-full filter blur-3xl"></div>
       </div>
-
-      <div className="p-4 max-w-xl mx-auto text-center">
-      <h2 className="text-xl font-semibold mb-4">How are you feeling today?</h2>
-      <div className="flex justify-center flex-wrap gap-4 mb-6">
-        {emotions.map(({ emoji, label }) => (
-          <button
-            key={label}
-            onClick={() => handleClick(label)}
-            className={`text-3xl p-3 rounded-full border-2 ${
-              selectedEmotion === label ? "border-blue-600" : "border-gray-300"
-            } hover:scale-110 transition`}
-            aria-label={label}
-          >
-            {emoji}
-          </button>
-        ))}
-      </div>
-
-      {loading && <p className="text-gray-600 italic">Thinking of something uplifting...</p>}
-
-      {quote && (
-        <div className="mt-6 p-4 border rounded bg-black-100">
-          <p className="text-lg font-medium mb-2">Your Motivational Quote:</p>
-          <p>{quote}</p>
-        </div>
-      )}
-    </div>
     </div>
   );
 }

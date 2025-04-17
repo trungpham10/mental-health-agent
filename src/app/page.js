@@ -12,6 +12,15 @@ import {
 } from "../services/chromaService";
 import KnowledgeUploader from "../components/KnowledgeUploader";
 
+const emotions = [
+  { emoji: "😊", label: "happy" },
+  { emoji: "😔", label: "sad" },
+  { emoji: "😠", label: "angry" },
+  { emoji: "😰", label: "anxious" },
+  { emoji: "🥱", label: "tired" },
+  { emoji: "😍", label: "loved" },
+];
+
 export default function Home() {
   const [messages, setMessages] = useState([
     { id: 1, text: "Hello, I am Jarvis. How can I assist you today?", isUser: false },
@@ -21,6 +30,9 @@ export default function Home() {
   const [queryMode, setQueryMode] = useState("both"); // "both", "knowledge", "memory"
   const [isClearing, setIsClearing] = useState(false);
   const [isRecommending, setIsRecommending] = useState(false);
+  const [quote, setQuote] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [selectedEmotion, setSelectedEmotion] = useState("");
 
   // Initialize ChromaDB on component mount
   useEffect(() => {
@@ -259,6 +271,22 @@ export default function Home() {
         setMessages([...newMessages, fallbackMessage]);
       }, 1000);
     }
+  };
+
+  const handleClick = async (emotion) => {
+    setSelectedEmotion(emotion);
+    setLoading(true);
+    setQuote("");
+
+    const res = await fetch("https://quotes-by-emotions.onrender.com/quote", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ emotion }),
+    });
+
+    const data = await res.json();
+    setQuote(data.quote);
+    setLoading(false);
   };
 
   const handleNextBestAction = async () => {
@@ -581,6 +609,33 @@ export default function Home() {
         <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500 rounded-full filter blur-3xl"></div>
         <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-500 rounded-full filter blur-3xl"></div>
       </div>
+
+      <div className="p-4 max-w-xl mx-auto text-center">
+      <h2 className="text-xl font-semibold mb-4">How are you feeling today?</h2>
+      <div className="flex justify-center flex-wrap gap-4 mb-6">
+        {emotions.map(({ emoji, label }) => (
+          <button
+            key={label}
+            onClick={() => handleClick(label)}
+            className={`text-3xl p-3 rounded-full border-2 ${
+              selectedEmotion === label ? "border-blue-600" : "border-gray-300"
+            } hover:scale-110 transition`}
+            aria-label={label}
+          >
+            {emoji}
+          </button>
+        ))}
+      </div>
+
+      {loading && <p className="text-gray-600 italic">Thinking of something uplifting...</p>}
+
+      {quote && (
+        <div className="mt-6 p-4 border rounded bg-black-100">
+          <p className="text-lg font-medium mb-2">Your Motivational Quote:</p>
+          <p>{quote}</p>
+        </div>
+      )}
+    </div>
     </div>
   );
 }

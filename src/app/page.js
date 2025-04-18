@@ -2,6 +2,9 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import { initializeQuoteCollection, getQuoteByEmotion } from "../services/quoteService";
+
+
 import { 
   initializeChroma, 
   addToMemory, 
@@ -25,13 +28,13 @@ export default function Home() {
   const [detectedMood, setDetectedMood] = useState(null);
 
   const moodDescriptions = {
-    '😊': 'Happy',
-    '😐': 'Neutral',
-    '😞': 'Sad',
-    '😡': 'Angry',
-    '😴': 'Tired',
-    '😰': 'Anxious',
-    '😍': 'Loved'
+    '😊': 'happy',
+    '😐': 'neutral',
+    '😞': 'sad',
+    '😡': 'angry',
+    '😴': 'tired',
+    '😰': 'anxious',
+    '😍': 'loved'
   };
 
   const [journalPrompt, setJournalPrompt] = useState(null);
@@ -44,7 +47,31 @@ export default function Home() {
   //const [loading, setLoading] = useState(false);
   const [loadingQuote, setLoadingQuote] = useState(false);
 
-
+  const moodQuotes = {
+    happy: [
+      "Happiness is not something ready made. It comes from your own actions.",
+      "The purpose of our lives is to be happy."
+    ],
+    sad: [
+      "Tough times never last, but tough people do.",
+      "This too shall pass."
+    ],
+    angry: [
+      "For every minute you are angry you lose sixty seconds of happiness.",
+      "Anger doesn’t solve anything. It builds nothing, but it can destroy everything."
+    ],
+    anxious: [
+      "You don’t have to control your thoughts. You just have to stop letting them control you.",
+      "Worrying doesn’t take away tomorrow’s troubles, it takes away today’s peace."
+    ],
+    tired: [
+      "I am tired, but I am not done."
+    ],
+    loved: [
+      "You are loved just for being who you are, just for existing.",
+      "You are enough just as you are."
+    ]
+  };
 
   const handleMoodSelect = (emoji) => {
     setSelectedMood(emoji);
@@ -55,6 +82,21 @@ export default function Home() {
         timestamp: new Date().toISOString(),
       }
     ]);
+  };
+
+  const fetchQuoteForMood = async (moodLabel) => {
+    try {
+      setLoadingQuote(true);
+      setQuote("");
+  
+      const quote = await getQuoteByEmotion(moodLabel); // from Chroma now
+      setQuote(quote || "No quote found for this emotion.");
+    } catch (error) {
+      console.error("Quote fetch error:", error);
+      setQuote("Couldn't fetch a quote right now.");
+    } finally {
+      setLoadingQuote(false);
+    }
   };
 
   const detectMoodFromMessage = async (text) => {
@@ -114,32 +156,14 @@ export default function Home() {
     return { userMood, autoMood, finalMood };
   };
 
-  const fetchQuoteForMood = async (moodLabel) => {
-    try {
-      setLoadingQuote(true);
-      setQuote("");
-  
-      const res = await fetch("https://quotes-by-emotions.onrender.com/quote", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ emotion: moodLabel }),
-      });
-  
-      const data = await res.json();
-      setQuote(data.quote);
-    } catch (error) {
-      console.error("Quote fetch error:", error);
-      setQuote("Couldn't fetch a quote right now.");
-    } finally {
-      setLoadingQuote(false);
-    }
-  };
 
   // Initialize ChromaDB on component mount
   useEffect(() => {
     const initDb = async () => {
       try {
         await initializeChroma();
+        await initializeQuoteCollection(); 
+
         
         // Load conversation history from ChromaDB
         const history = await getConversationHistory();
@@ -157,9 +181,9 @@ export default function Home() {
         console.error("Failed to initialize ChromaDB:", error);
       }
     };
-
-    initDb();
-  }, []);
+    
+      initDb();
+    }, []);
 
   const handleClearStores = async () => {
     setIsClearing(true);
@@ -436,8 +460,8 @@ export default function Home() {
             { 
               role: 'system', 
               content: `You are Serein, You are Seriene, a calm, emotionally-aware mental health companion,
-              User’s current mood is: "${moodText}".
-
+              The user has selected their mood as: "${moodDescriptions[selectedMood] || 'Neutral'}".
+              Based on their message, you detected the mood as: "${moodDescriptions[detectedMood] || 'Neutral'}"
               
                       TASK: The user is asking for the next best action to take. You must recommend ONE specific action. Add a famous quote to motivate the user to accomplish the action.
                       
@@ -567,7 +591,7 @@ export default function Home() {
               ]);
 
               // Show journaling prompt for specific moods
-              if (['😞', '😡', '😴'].includes(emoji)) {
+              if (['😞', '😡', '😴', '😰'].includes(emoji)) {
                 setJournalPrompt(`Would you like to journal about what made you feel ${moodDescriptions[emoji].toLowerCase()} today?`);
               } else {
                 setJournalPrompt(null);
@@ -578,6 +602,20 @@ export default function Home() {
             {emoji}
             </button>
           ))}
+        </div>
+
+        {/* Quote Display */}
+        <div className="max-w-xs text-sm text-gray-300 border-l border-gray-700 pl-4">
+          {loadingQuote ? (
+            <p className="italic">Thinking of something uplifting...</p>
+            ) : quote ? (
+            <>
+              <p className="font-semibold text-white mb-1">Gentle Thought</p>
+              <p className="italic">“{quote}”</p>
+            </>
+          ) : (
+            <p className="text-gray-500 italic">Pick a mood to see a quote</p>
+          )}
         </div>
 
         <div className="flex items-center gap-4">
@@ -778,14 +816,7 @@ export default function Home() {
         <p className="text-sm italic text-gray-400 px-4 mt-2">Thinking of something uplifting...</p>
       )}
 
-      {quote && (
-        <div className="px-4 mt-4">
-          <div className="p-3 rounded-md bg-gray-800 border border-gray-600">
-            <p className="text-sm text-gray-300">Here's something to reflect on:</p>
-            <p className="mt-2 italic text-white">“{quote}”</p>
-          </div>
-        </div>
-      )}
+      
 
       {/* Visual effects */}
       <div className="fixed top-0 left-0 w-full h-full pointer-events-none opacity-30 z-[-1]">

@@ -1,0 +1,25 @@
+{
+    "happy": [
+        "Happiness is not something ready made. It comes from your own actions.",
+        "The purpose of our lives is to be happy."
+    ],
+    "sad": [
+        "Tough times never last, but tough people do.",
+        "This too shall pass."
+    ],
+    "angry": [
+        "For every minute you are angry you lose sixty seconds of happiness.",
+        "Anger doesn’t solve anything. It builds nothing, but it can destroy everything."
+    ],
+    "anxious": [
+        "You don’t have to control your thoughts. You just have to stop letting them control you.",
+        "Worrying doesn’t take away tomorrow’s troubles, it takes away today’s peace."
+    ],
+    "tired": [
+        "I am tired, but I am not done."
+    ],
+    "loved": [
+        "You are loved just for being who you are, just for existing.",
+        "You are enough just as you are."
+    ]
+}

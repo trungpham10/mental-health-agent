@@ -185,7 +185,7 @@ export default function KnowledgeUploader() {
 
               {uploadResult && uploadResult.success && (
                 <div className="mt-4">
-                  <p className="text-sm text-gray-400">✓ Knowledge has been added to Jarvis&apos;s knowledge base</p>
+                  <p className="text-sm text-gray-400">✓ Knowledge has been added to Serein&apos;s knowledge base</p>
                   <p className="text-sm text-gray-400 mt-1">✓ You can now ask questions about this content</p>
                   <div className="mt-3 p-2 bg-gray-800 rounded border border-gray-700">
                     <p className="text-xs text-gray-300 mb-1">To query specifically from knowledge base:</p>

@@ -1,25 +1,86 @@
 {
     "happy": [
-        "Happiness is not something ready made. It comes from your own actions.",
-        "The purpose of our lives is to be happy."
+      "Happiness is a direction, not a place.",
+      "Joy is not in things; it is in us.",
+      "Keep smiling, it makes people wonder what you’re up to.",
+      "Happiness is the best makeup.",
+      "Smile more. Worry less.",
+      "Be so happy that when others look at you, they become happy too.",
+      "A smile is a curve that sets everything straight.",
+      "The best way to cheer yourself is to try to cheer someone else up.",
+      "Choose happiness daily and you’ll be surprised how much better life gets.",
+      "Let your smile change the world, but don’t let the world change your smile."
+    ],
+    "neutral": [
+      "Some days are just okay, and that’s perfectly fine.",
+      "Not every moment needs to be extraordinary.",
+      "Embrace the stillness; it's a part of life too.",
+      "Balance is found in the in-between.",
+      "Let this moment be what it is.",
+      "Neutrality is where clarity begins.",
+      "Calm is a superpower.",
+      "Peace doesn't mean everything's perfect. It means you’re not controlled by chaos.",
+      "It's okay to feel nothing; just breathe.",
+      "The quiet moments are often the most honest."
     ],
     "sad": [
-        "Tough times never last, but tough people do.",
-        "This too shall pass."
+      "It's okay to not be okay.",
+      "This too shall pass.",
+      "Your feelings are valid.",
+      "Tough times don’t last, but tough people do.",
+      "Crying doesn’t mean you’re weak; it means you’ve been strong too long.",
+      "Even the darkest night will end and the sun will rise.",
+      "Be gentle with yourself.",
+      "Healing takes time, and that’s okay.",
+      "Storms make trees take deeper roots.",
+      "You are not alone in this."
     ],
     "angry": [
-        "For every minute you are angry you lose sixty seconds of happiness.",
-        "Anger doesn’t solve anything. It builds nothing, but it can destroy everything."
-    ],
-    "anxious": [
-        "You don’t have to control your thoughts. You just have to stop letting them control you.",
-        "Worrying doesn’t take away tomorrow’s troubles, it takes away today’s peace."
+      "Breathe in calm, breathe out tension.",
+      "Anger is one letter short of danger.",
+      "You have power over your mind, not outside events.",
+      "Pause before you react.",
+      "Let your calm be louder than your rage.",
+      "You deserve peace more than you deserve to be right.",
+      "Anger is a signal, not a solution.",
+      "Don’t let a bad moment turn into a bad day.",
+      "Respond with grace, even when it’s hard.",
+      "Peace begins with you."
     ],
     "tired": [
-        "I am tired, but I am not done."
+      "Rest is productive too.",
+      "You don’t have to do everything today.",
+      "Listen to your body; it knows what you need.",
+      "Even machines need to recharge.",
+      "Your energy is valuable. Use it wisely.",
+      "Sleep is the best meditation.",
+      "Don’t feel guilty for needing rest.",
+      "Sometimes doing nothing is doing everything.",
+      "Recharge. Refocus. Restart.",
+      "Self-care starts with rest."
+    ],
+    "anxious": [
+      "You’ve survived 100% of your worst days.",
+      "Take it one breath at a time.",
+      "You are not your thoughts.",
+      "This moment is not forever.",
+      "Anxiety does not define you.",
+      "Focus on what you can control.",
+      "It’s okay to slow down.",
+      "You are safe, you are strong, you are not alone.",
+      "Let go of what you can’t change.",
+      "Everything will be okay, even if it doesn’t feel that way right now."
     ],
     "loved": [
-        "You are loved just for being who you are, just for existing.",
-        "You are enough just as you are."
+      "You are deeply loved, always.",
+      "You matter more than you know.",
+      "Love begins with you.",
+      "You are enough, just as you are.",
+      "You are surrounded by love, seen or unseen.",
+      "You bring light to those around you.",
+      "You are someone's reason to smile.",
+      "The love you give is never wasted.",
+      "Never forget how much you are appreciated.",
+      "Your existence makes a difference."
     ]
-}
+  }

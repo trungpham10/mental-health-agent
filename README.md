@@ -2,6 +2,7 @@
 Seriene is a smart, agentic mental wellness assistant that supports journaling, mood detection, memory-based conversations, motivational quotes, and contextual next-best-action suggestions.
 
 =======================================================================
+
 Features:
 1. Mood Detection + Selection with emoji-based interface
 
@@ -16,6 +17,7 @@ Features:
 6. Next Best Action suggestions with inspirational quotes
 
 ======================================================================
+
 🛠️ Tech Stack
 Frontend: Next.js + TailwindCSS
 
@@ -26,6 +28,7 @@ Vector Store: ChromaDB (optional, or fallback to local JSON)
 Quote Source: Local quotes.json file
 
 =====================================================================
+
 📦 Installation & Setup
 1. Clone the repo
 bash
